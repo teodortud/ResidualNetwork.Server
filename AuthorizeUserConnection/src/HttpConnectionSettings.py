@@ -4,25 +4,28 @@ import flask
 import os
 import werkzeug
 from Services.NetworkPredicitionSettings import model_predict
+from Services.MqttConnectionSettings import mqtt_publish
 
 app = flask.Flask(__name__)
 
 
 @app.route('/upload-image', methods=['POST'])
 def handle_request():
-    imagefile = flask.request.files['image']
+    image_file = flask.request.files['image']
 
-    filename = werkzeug.utils.secure_filename(imagefile.filename)
+    filename = werkzeug.utils.secure_filename(image_file.filename)
 
     filename_path = os.path.abspath(filename)
 
-    imagefile.save(filename)
+    image_file.save(filename)
 
     image = filename_path
 
     result = model_predict(image)
 
     os.remove(filename_path)
+
+    mqtt_publish(result)
 
     return result
 
